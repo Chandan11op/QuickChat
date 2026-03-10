@@ -3,6 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { useAuthContext } from '../context/SocketContext.jsx';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const EditProfile = () => {
   const navigate = useNavigate();
   const { authUser, setAuthUser } = useAuthContext();

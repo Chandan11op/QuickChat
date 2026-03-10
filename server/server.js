@@ -17,16 +17,24 @@ dotenv.config()
 
 const app = express()
 const server = http.createServer(app)
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  process.env.CLIENT_URL
+].filter(Boolean);
+
 export const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173", // Assuming default Vite port, update if different
+    origin: allowedOrigins,
     methods: ["GET", "POST"]
   }
 })
 
 connectDB()
 
-app.use(cors())
+app.use(cors({
+  origin: allowedOrigins
+}))
 app.use(express.json())
 
 // Serve static uploads

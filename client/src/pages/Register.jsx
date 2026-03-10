@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuthContext } from '../context/SocketContext.jsx';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const Register = () => {
   const navigate = useNavigate();
   const { setAuthUser } = useAuthContext();
@@ -29,7 +31,7 @@ const Register = () => {
 
     try {
       setLoading(true);
-      const res = await axios.post('http://localhost:5000/api/auth/register', {
+      const res = await axios.post(`${API_URL}/api/auth/register`, {
         username: formData.username,
         email: formData.email,
         password: formData.password

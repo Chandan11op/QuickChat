@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuthContext, useSocketContext } from '../context/SocketContext.jsx';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const ChatDashboard = () => {
   const navigate = useNavigate();
   const { authUser, setAuthUser } = useAuthContext();
@@ -29,6 +31,7 @@ const ChatDashboard = () => {
   
   const [notificationPermission, setNotificationPermission] = useState(Notification.permission);
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
   const notificationSound = useRef(new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3'));
 
   const emojis = ['😀', '😂', '😍', '🤔', '👍', '🔥', '🎉', '❤️', '👏', '🙌', '😎', '✨', '😢', '😡', '🙏', '💯'];
@@ -47,7 +50,7 @@ const ChatDashboard = () => {
     const fetchFriends = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await axios.get('http://localhost:5000/api/users/friends', {
+        const res = await axios.get(`${API_URL}/api/users/friends`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         
@@ -686,7 +689,7 @@ const ChatDashboard = () => {
                         
                         <input 
                           type="file" 
-                          id="fileInput" 
+                          ref={fileInputRef}
                           className="hidden" 
                           onChange={handleFileChange}
                           accept="image/*,application/pdf,.doc,.docx,.txt"
@@ -694,8 +697,9 @@ const ChatDashboard = () => {
                         
                         <button 
                           type="button" 
-                          onClick={() => document.getElementById('fileInput').click()}
-                          className="p-2 text-gray-400 hover:text-primary transition-colors"
+                          onClick={() => fileInputRef.current?.click()}
+                          title="Attach file"
+                          className="p-2 text-gray-400 hover:text-primary transition-colors flex items-center justify-center"
                         >
                           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
                         </button>

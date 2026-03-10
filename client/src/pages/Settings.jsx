@@ -4,6 +4,8 @@ import axios from 'axios';
 import { useAuthContext } from '../context/SocketContext.jsx';
 import { useTheme } from '../context/ThemeContext.jsx';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const Settings = () => {
   const navigate = useNavigate();
   const { authUser, setAuthUser } = useAuthContext();
