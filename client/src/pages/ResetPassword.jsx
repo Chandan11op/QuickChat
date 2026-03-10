@@ -1,0 +1,73 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
+
+const ResetPassword = () => {
+  return (
+    <div className="flex flex-col min-h-screen">
+      {/* Header */}
+      <header className="flex items-center p-6 border-b border-dark-600">
+        <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition">
+          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+              <path fillRule="evenodd" d="M12.963 2.286a.75.75 0 00-1.071-.136 9.742 9.742 0 00-3.539 6.177A7.547 7.547 0 016.648 6.61a.75.75 0 00-1.152.082A9 9 0 1015.68 4.534a7.46 7.46 0 01-2.717-2.248zM15.75 14.25a3.75 3.75 0 11-7.313-1.172c.628.465 1.35.81 2.133 1a5.99 5.99 0 011.925-3.545 3.75 3.75 0 013.255 3.717z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <span className="text-xl font-bold text-white tracking-wide">QuickChat</span>
+        </Link>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1 flex items-center justify-center p-6">
+        <div className="w-full max-w-md">
+          <div className="mb-8">
+            <h1 className="text-4xl font-extrabold text-white mb-2">Create New Password</h1>
+            <p className="text-gray-400">Please enter your new password below. Make it strong!</p>
+          </div>
+
+          <form className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-white mb-2">New Password</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                  </svg>
+                </div>
+                <input 
+                  type="password" 
+                  placeholder="••••••••" 
+                  className="w-full bg-dark-900 border border-dark-600 rounded-xl py-3 pl-11 pr-4 text-white placeholder-gray-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-white mb-2">Confirm New Password</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                </div>
+                <input 
+                  type="password" 
+                  placeholder="••••••••" 
+                  className="w-full bg-dark-900 border border-dark-600 rounded-xl py-3 pl-11 pr-4 text-white placeholder-gray-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+                />
+              </div>
+            </div>
+
+            <button type="button" className="w-full bg-primary hover:bg-primaryHover text-white font-semibold py-3 rounded-full transition-all shadow-lg flex justify-center items-center gap-2">
+              Reset Password
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+            </button>
+          </form>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default ResetPassword;
