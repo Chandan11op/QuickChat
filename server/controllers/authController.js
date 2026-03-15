@@ -14,12 +14,11 @@ if(userExists){
 return res.status(400).json({msg:"User already exists"})
 }
 
-const hashedPassword = await bcrypt.hash(password,10)
-
+// Password will be hashed by User model pre-save hook
 const user = await User.create({
 username,
 email,
-password:hashedPassword
+password
 })
 
 res.json(user)
@@ -44,7 +43,8 @@ if(!user){
 return res.status(400).json({msg:"Invalid credentials"})
 }
 
-const match = await bcrypt.compare(password,user.password)
+// Use schema method to compare passwords
+const match = await user.comparePassword(password)
 
 if(!match){
 return res.status(400).json({msg:"Invalid credentials"})
