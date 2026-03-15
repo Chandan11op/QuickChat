@@ -41,7 +41,12 @@ const Register = () => {
       // We will redirect to login page for now so they generate a real session.
       navigate('/'); 
     } catch (err) {
-      setError(err.response?.data?.msg || 'An error occurred during registration');
+      if (!err.response) {
+        setError('Server is unreachable. Please check if the backend is running and the API URL is correct.');
+      } else {
+        setError(err.response.data?.msg || 'An error occurred during registration');
+      }
+      console.error('Registration error:', err);
     } finally {
       setLoading(false);
     }
