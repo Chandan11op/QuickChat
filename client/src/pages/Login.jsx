@@ -34,7 +34,12 @@ const Login = () => {
       
       navigate('/chat');
     } catch (err) {
-      setError(err.response?.data?.msg || 'Invalid email or password');
+      if (!err.response) {
+        setError('Server is unreachable. Please check if the backend is running and the API URL is correct.');
+      } else {
+        setError(err.response.data?.msg || 'Invalid email or password');
+      }
+      console.error('Login error:', err);
     } finally {
       setLoading(false);
     }
