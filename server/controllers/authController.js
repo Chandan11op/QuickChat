@@ -21,7 +21,13 @@ email,
 password
 })
 
-res.json(user)
+const token = jwt.sign(
+{id:user._id},
+process.env.JWT_SECRET,
+{expiresIn:"7d"}
+)
+
+res.json({token,user})
 
 }catch(err){
 
@@ -65,3 +71,24 @@ res.status(500).json(err)
 }
 
 }
+
+export async function oauthSuccess(req, res) {
+  try {
+    const token = jwt.sign(
+      { id: req.user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    const userData = JSON.stringify({
+      _id: req.user._id,
+      username: req.user.username,
+      email: req.user.email,
+      avatar: req.user.avatar,
+    });
+
+    res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/oauth-success?token=${token}&user=${encodeURIComponent(userData)}`);
+  } catch (err) {
+    res.status(500).json(err);
+  }
+}

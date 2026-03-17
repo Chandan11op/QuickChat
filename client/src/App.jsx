@@ -4,6 +4,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import OAuthSuccess from "./pages/OAuthSuccess";
 
 import ChatDashboard from "./pages/ChatDashboard";
 import Profile from "./pages/Profile";
@@ -23,6 +24,7 @@ function App() {
           <Route path="/register" element={authUser ? <Navigate to="/chat" /> : <Register />} />
           <Route path="/forgot" element={authUser ? <Navigate to="/chat" /> : <ForgotPassword />} />
           <Route path="/reset" element={authUser ? <Navigate to="/chat" /> : <ResetPassword />} />
+          <Route path="/oauth-success" element={<OAuthSuccess />} />
           <Route path="/chat" element={authUser ? <ChatDashboard /> : <Navigate to="/" />} />
           <Route path="/profile" element={authUser ? <Profile /> : <Navigate to="/" />} />
           <Route path="/edit-profile" element={authUser ? <EditProfile /> : <Navigate to="/" />} />

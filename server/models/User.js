@@ -5,24 +5,40 @@ const userSchema = new mongoose.Schema({
 
 username:{
 type:String,
-required:true
+required:true,
+trim:true
 },
 
 email:{
 type:String,
 required:true,
-unique:true
+unique:true,
+trim:true
 },
 
-password:{
-type:String,
-required:true
-},
+  password:{
+    type:String,
+    required: function() {
+      return !this.googleId && !this.githubId;
+    }
+  },
 
-avatar:{
-type:String,
-default:""
-},
+  googleId: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
+
+  githubId: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
+
+  avatar:{
+    type:String,
+    default:""
+  },
 
 bio:{
 type:String,

@@ -7,9 +7,10 @@ export const uploadAvatar = async (req, res) => {
         if (!req.file) return res.status(400).json({ message: "No file uploaded" });
         
         const avatarPath = req.file.filename;
+        const baseUrl = process.env.BACKEND_URL || 'http://localhost:5000';
         const user = await User.findByIdAndUpdate(
             req.user,
-            { avatar: `http://localhost:5000/uploads/${avatarPath}` },
+            { avatar: `${baseUrl}/uploads/${avatarPath}` },
             { new: true }
         );
         

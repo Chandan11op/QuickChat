@@ -12,6 +12,7 @@ import authRoutes from "./routes/authRoutes.js"
 import userRoutes from "./routes/userRoutes.js"
 import socketSetup from "./socket/socket.js"
 import messageRoutes from "./routes/messageRoutes.js"
+import passport from "./config/passport.js"
 
 dotenv.config()
 
@@ -36,6 +37,7 @@ app.use(cors({
   origin: allowedOrigins
 }))
 app.use(express.json())
+app.use(passport.initialize())
 
 // Serve static uploads
 const __filename = fileURLToPath(import.meta.url);
