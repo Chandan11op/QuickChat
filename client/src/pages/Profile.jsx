@@ -1,253 +1,305 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { useAuthContext, useSocketContext } from '../context/SocketContext.jsx';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+import { motion } from 'framer-motion';
+import { Camera, MapPin, Calendar, Users, UserCheck, ArrowLeft, Loader2, Mail } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../store/useAuthStore';
+import { useChatStore } from '../store/useChatStore';
+import api from '../services/api';
+import toast from 'react-hot-toast';
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { authUser, setAuthUser } = useAuthContext();
-  const { onlineUsers } = useSocketContext();
-
+  const { user, setUser } = useAuthStore();
+  const { onlineUsers } = useChatStore();
+  
   const [friends, setFriends] = useState([]);
   const [friendRequests, setFriendRequests] = useState([]);
   const [activeTab, setActiveTab] = useState('friends');
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    if (!authUser) {
-      navigate('/');
-      return;
-    }
-    fetchFriendsData();
-  }, [authUser, navigate]);
-
-  const fetchFriendsData = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const [friendsRes, requestsRes] = await Promise.all([
-        axios.get('http://localhost:5000/api/users/friends', { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get('http://localhost:5000/api/users/friend-requests', { headers: { Authorization: `Bearer ${token}` } })
-      ]);
-      
-      const uniqueFriends = friendsRes.data.reduce((acc, current) => {
-         const x = acc.find(item => item._id === current._id);
-         if (!x) {
-           return acc.concat([current]);
-         } else {
-           return acc;
-         }
-      }, []);
-
-      setFriends(uniqueFriends);
-      setFriendRequests(requestsRes.data);
-    } catch (err) {
-      console.error("Error fetching friends data", err);
-    }
-  };
+    const fetchData = async () => {
+      try {
+        const [friendsRes, requestsRes] = await Promise.all([
+          api.get('/users/friends'),
+          api.get('/users/friend-requests')
+        ]);
+        setFriends(friendsRes.data);
+        setFriendRequests(requestsRes.data);
+      } catch (err) {
+        toast.error('Failed to load profile data');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const handleAcceptRequest = async (senderId) => {
     try {
-      const token = localStorage.getItem('token');
-      await axios.post('http://localhost:5000/api/users/accept-request', 
-        { id: senderId }, 
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      fetchFriendsData();
+      await api.post('/users/accept-request', { id: senderId });
+      toast.success('Friend request accepted!');
+      // Refresh data
+      const [friendsRes, requestsRes] = await Promise.all([
+        api.get('/users/friends'),
+        api.get('/users/friend-requests')
+      ]);
+      setFriends(friendsRes.data);
+      setFriendRequests(requestsRes.data);
     } catch (err) {
-      alert("Failed to accept request");
+      toast.error('Failed to accept request');
     }
   };
 
-  const handleFileChange = async (e) => {
+  const handleAvatarUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      return toast.error('File size must be less than 2MB');
+    }
 
     const formData = new FormData();
     formData.append('avatar', file);
 
+    setUploading(true);
     try {
-      const token = localStorage.getItem('token');
-      const res = await axios.post('http://localhost:5000/api/users/upload-avatar', formData, {
-        headers: { 
-          'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${token}` 
-        }
+      const { data } = await api.post('/users/upload-avatar', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
-      // The backend now returns the full updated user object
-      setAuthUser(res.data);
-      localStorage.setItem('user', JSON.stringify(res.data));
+      setUser(data);
+      toast.success('Profile picture updated!');
     } catch (err) {
-      alert("Failed to upload avatar");
+      toast.error('Failed to upload avatar');
+    } finally {
+      setUploading(false);
     }
   };
 
-  if (!authUser) return null;
-
-  const getAvatar = (user) => {
-    return user?.avatar || `https://ui-avatars.com/api/?name=${user?.username}&background=random`;
-  };
+  if (loading) {
+    return (
+      <div className="h-screen bg-background-primary flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-accent animate-spin" />
+      </div>
+    );
+  }
 
   return (
-    <div className="flex h-screen bg-dark-800 text-gray-200 overflow-hidden font-sans">
-      
-      {/* Sidebar Navigation */}
-      <aside className="w-64 border-r border-dark-600 bg-dark-900 flex flex-col flex-shrink-0">
-        <div className="p-8 pb-4 flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary rounded-2xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
-            </svg>
-          </div>
-          <span className="text-xl font-bold text-white tracking-tight">QuickiChat</span>
-        </div>
+    <div className="min-h-screen bg-background-primary text-text-primary">
+      {/* Header */}
+      <div className="h-64 bg-gradient-to-br from-accent/30 via-background-secondary to-background-primary relative">
+        <button 
+          onClick={() => navigate('/chat')}
+          className="absolute top-8 left-8 p-2 bg-white/5 hover:bg-white/10 rounded-xl backdrop-blur-md border border-white/10 transition-all z-10"
+        >
+          <ArrowLeft size={24} />
+        </button>
+      </div>
 
-        <nav className="flex-1 px-4 py-8 space-y-1">
-          <Link to="/chat" className="flex items-center gap-4 px-4 py-3.5 rounded-2xl text-gray-400 hover:bg-dark-700 hover:text-white font-medium transition-all group">
-            <svg className="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-            </svg>
-            Dashboard
-          </Link>
-          <div className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl bg-primary/10 text-primary font-medium">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-            </svg>
-            Profile
-          </div>
-          <Link to="/settings" className="flex items-center gap-4 px-4 py-3.5 rounded-2xl text-gray-400 hover:bg-dark-700 hover:text-white font-medium transition-all">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-            </svg>
-            Settings
-          </Link>
-        </nav>
-      </aside>
-
-      {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto w-full custom-scrollbar relative bg-dark-800">
-        <div className="max-w-4xl mx-auto py-16 px-8">
-          
-          {/* Hero Section */}
-          <div className="relative mb-8 pt-20 pb-12 px-8 bg-dark-900 border border-dark-600 rounded-[32px] overflow-hidden shadow-2xl">
-            <div className="absolute top-0 left-0 w-full h-40 bg-gradient-to-br from-primary/20 via-primary/5 to-transparent"></div>
-            
-            <div className="relative z-10 flex flex-col md:flex-row items-center gap-8 md:items-end">
-              <div className="relative group">
-                <div className="w-32 h-32 rounded-3xl p-1 bg-dark-700 border border-dark-600 shadow-2xl overflow-hidden transform group-hover:scale-105 transition-transform duration-500">
-                  <img src={getAvatar(authUser)} alt="" className="w-full h-full rounded-[20px] object-cover" />
-                </div>
-                <button 
-                  onClick={() => fileInputRef.current.click()}
-                  className="absolute -bottom-2 -right-2 bg-primary hover:bg-primaryHover text-white p-2.5 rounded-2xl border-4 border-dark-900 shadow-xl transition-all hover:rotate-12"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                  </svg>
-                </button>
-                <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
-              </div>
-
-              <div className="flex-1 text-center md:text-left">
-                <h1 className="text-4xl font-black text-white mb-2 tracking-tight">{authUser.username}</h1>
-                <p className="text-gray-400 font-medium mb-4">{authUser.email}</p>
-                <div className="flex flex-wrap justify-center md:justify-start gap-4">
-                  <div className="bg-dark-700/50 px-4 py-2 rounded-xl border border-dark-600">
-                    <span className="text-gray-500 text-[10px] font-bold uppercase tracking-widest block mb-0.5">Joined</span>
-                    <span className="text-white text-sm font-semibold">{new Date(authUser.createdAt).toLocaleDateString(undefined, {month: 'long', year: 'numeric'})}</span>
+      <div className="max-w-5xl mx-auto px-6 -mt-32 pb-20 relative">
+        {/* Profile Card */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-background-secondary/50 backdrop-blur-2xl border border-glass-border rounded-[2.5rem] p-8 md:p-12 shadow-2xl"
+        >
+          <div className="flex flex-col md:flex-row gap-10 items-center md:items-start">
+            {/* Avatar Section */}
+            <div className="relative group">
+              <div className="w-44 h-44 rounded-full p-1.5 bg-gradient-to-tr from-accent to-purple-500 shadow-2xl relative overflow-hidden">
+                <img 
+                  src={user?.avatar || `https://ui-avatars.com/api/?name=${user?.username}&background=random`} 
+                  className="w-full h-full rounded-full object-cover border-4 border-background-secondary"
+                  alt="Profile"
+                />
+                {uploading && (
+                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                    <Loader2 className="w-8 h-8 text-white animate-spin" />
                   </div>
-                  <div className="bg-dark-700/50 px-4 py-2 rounded-xl border border-dark-600">
-                    <span className="text-gray-500 text-[10px] font-bold uppercase tracking-widest block mb-0.5">Friends</span>
-                    <span className="text-white text-sm font-semibold tracking-tighter">{friends.length} Accounts</span>
-                  </div>
-                  <Link to="/edit-profile" className="bg-primary/20 hover:bg-primary/30 text-primary px-4 py-2 rounded-xl border border-primary/20 text-[10px] font-black uppercase tracking-widest transition-all">
-                    Edit Details
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Bio Card */}
-            <div className="bg-dark-900 border border-dark-600 rounded-[32px] p-8 shadow-xl">
-              <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-6">About Me</h3>
-              <p className="text-sm text-gray-300 leading-relaxed italic">
-                 "{authUser.bio || "This user prefers to keep their mystery. No bio set yet!"}"
-              </p>
-            </div>
-
-            {/* Content Tabs */}
-            <div className="md:col-span-2 bg-dark-900 border border-dark-600 rounded-[32px] p-8 shadow-xl flex flex-col min-h-[400px]">
-              <div className="flex items-center gap-6 mb-8 border-b border-dark-600 pb-4">
-                <button 
-                  onClick={() => setActiveTab('friends')}
-                  className={`text-sm font-bold tracking-tighter transition-all ${activeTab === 'friends' ? 'text-primary scale-110' : 'text-gray-500 hover:text-gray-300'}`}
-                >
-                  My Network
-                </button>
-                <button 
-                  onClick={() => setActiveTab('requests')}
-                  className={`text-sm font-bold tracking-tighter flex items-center gap-2 transition-all ${activeTab === 'requests' ? 'text-primary scale-110' : 'text-gray-500 hover:text-gray-300'}`}
-                >
-                  Requests
-                  {friendRequests.length > 0 && (
-                    <span className="bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-lg border-2 border-dark-900">{friendRequests.length}</span>
-                  )}
-                </button>
-              </div>
-
-              <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-2">
-                {activeTab === 'friends' ? (
-                  friends.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-                       <svg className="w-12 h-12 mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" strokeWidth="1.5"/></svg>
-                       <p className="text-xs font-bold uppercase tracking-widest italic">No connections yet</p>
-                    </div>
-                  ) : (
-                    friends.map((friend) => (
-                      <div key={friend._id} className="flex items-center justify-between p-4 rounded-2xl bg-dark-800/50 hover:bg-dark-700 hover:scale-[1.02] transition-all cursor-default">
-                        <div className="flex items-center gap-4">
-                          <img src={getAvatar(friend)} alt="" className="w-10 h-10 rounded-xl object-cover shadow-lg" />
-                          <div>
-                            <h4 className="text-sm font-bold text-white">{friend.username}</h4>
-                            <div className="flex items-center gap-1.5 mt-0.5">
-                               <div className={`w-1.5 h-1.5 rounded-full ${onlineUsers.includes(friend._id) ? 'bg-green-500' : 'bg-gray-600'}`}></div>
-                               <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{onlineUsers.includes(friend._id) ? 'Online' : 'Offline'}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  )
-                ) : (
-                  friendRequests.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-                       <p className="text-xs font-bold uppercase tracking-widest italic">Inbox is empty</p>
-                    </div>
-                  ) : (
-                    friendRequests.map((reqUser) => (
-                      <div key={reqUser._id} className="flex items-center justify-between p-4 rounded-2xl bg-dark-800 border-l-4 border-primary shadow-lg animate-in fade-in slide-in-from-left-4">
-                        <div className="flex items-center gap-4">
-                           <img src={getAvatar(reqUser)} alt="" className="w-10 h-10 rounded-xl object-cover shadow-sm" />
-                           <h4 className="text-sm font-bold text-white uppercase tracking-tighter">{reqUser.username}</h4>
-                        </div>
-                        <button onClick={() => handleAcceptRequest(reqUser._id)} className="bg-primary hover:bg-primaryHover text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all hover:shadow-lg hover:shadow-primary/30">
-                          Confirm
-                        </button>
-                      </div>
-                    ))
-                  )
                 )}
               </div>
+              <button 
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="absolute bottom-2 right-2 p-3 bg-accent hover:bg-blue-600 text-white rounded-2xl shadow-xl transition-all hover:scale-110 active:scale-95 disabled:opacity-50"
+              >
+                <Camera size={20} />
+              </button>
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handleAvatarUpload} 
+                className="hidden" 
+                accept="image/*" 
+              />
+            </div>
+
+            {/* Info Section */}
+            <div className="flex-1 text-center md:text-left pt-4">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div>
+                  <h1 className="text-4xl font-black tracking-tight text-text-primary">{user?.username}</h1>
+                  <div className="flex items-center justify-center md:justify-start gap-4 mt-2 text-text-secondary">
+                    <span className="flex items-center gap-1.5 text-sm font-medium">
+                      <Mail size={16} className="text-accent" />
+                      {user?.email}
+                    </span>
+                    <span className="flex items-center gap-1.5 text-sm font-medium">
+                      <Calendar size={16} className="text-accent" />
+                      Joined {new Date(user?.createdAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
+                    </span>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => navigate('/settings')}
+                  className="px-6 py-2.5 bg-accent/10 hover:bg-accent/20 text-accent rounded-xl border border-accent/20 font-bold text-xs uppercase tracking-widest transition-all"
+                >
+                  Edit Profile
+                </button>
+              </div>
+
+              <div className="mt-8 p-6 bg-background-tertiary/30 rounded-3xl border border-glass-border max-w-2xl">
+                <h3 className="text-[10px] font-bold text-accent uppercase tracking-widest mb-3">About Me</h3>
+                <p className="text-text-secondary leading-relaxed italic">
+                  "{user?.bio || "No bio set yet. Tell your story!"}"
+                </p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Stats & Network */}
+        <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Quick Stats */}
+          <div className="space-y-6">
+            <div className="bg-background-secondary/50 backdrop-blur-xl border border-glass-border rounded-3xl p-6">
+              <h3 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-4">Quick Stats</h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 text-sm text-text-secondary">
+                    <Users size={18} className="text-accent" />
+                    Friends
+                  </div>
+                  <span className="font-bold">{friends.length}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 text-sm text-text-secondary">
+                    <UserCheck size={18} className="text-accent" />
+                    Pending
+                  </div>
+                  <span className="font-bold text-orange-400">{friendRequests.length}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Tabs Content */}
+          <div className="lg:col-span-2 bg-background-secondary/50 backdrop-blur-xl border border-glass-border rounded-[2.5rem] p-8 min-h-[400px]">
+            <div className="flex items-center gap-8 mb-8 border-b border-glass-border pb-4">
+              <button 
+                onClick={() => setActiveTab('friends')}
+                className={`text-sm font-bold tracking-tight transition-all relative py-2 ${
+                  activeTab === 'friends' ? 'text-accent' : 'text-text-secondary hover:text-text-primary'
+                }`}
+              >
+                My Network
+                {activeTab === 'friends' && (
+                  <motion.div layoutId="tab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent" />
+                )}
+              </button>
+              <button 
+                onClick={() => setActiveTab('requests')}
+                className={`text-sm font-bold tracking-tight transition-all relative py-2 flex items-center gap-2 ${
+                  activeTab === 'requests' ? 'text-accent' : 'text-text-secondary hover:text-text-primary'
+                }`}
+              >
+                Friend Requests
+                {friendRequests.length > 0 && (
+                  <span className="w-5 h-5 bg-red-500 text-white text-[10px] flex items-center justify-center rounded-full">
+                    {friendRequests.length}
+                  </span>
+                )}
+                {activeTab === 'requests' && (
+                  <motion.div layoutId="tab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent" />
+                )}
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {activeTab === 'friends' ? (
+                friends.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-20 text-center">
+                    <div className="w-16 h-16 bg-background-tertiary rounded-2xl flex items-center justify-center mb-4 text-text-secondary">
+                      <Users size={32} />
+                    </div>
+                    <p className="text-sm text-text-secondary italic">No friends in your network yet.</p>
+                  </div>
+                ) : (
+                  friends.map((friend) => (
+                    <motion.div 
+                      key={friend._id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="flex items-center justify-between p-4 bg-background-tertiary/30 rounded-2xl border border-glass-border hover:bg-background-tertiary/50 transition-all cursor-pointer group"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="relative">
+                          <img src={friend.avatar || `https://ui-avatars.com/api/?name=${friend.username}`} className="w-11 h-11 rounded-xl object-cover shadow-lg" alt="" />
+                          {onlineUsers.includes(friend._id) && (
+                            <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-background-secondary shadow-lg"></div>
+                          )}
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-bold text-text-primary">{friend.username}</h4>
+                          <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest">
+                            {onlineUsers.includes(friend._id) ? 'Online' : 'Offline'}
+                          </p>
+                        </div>
+                      </div>
+                      <button className="p-2.5 bg-background-primary/50 text-text-secondary hover:text-accent rounded-xl border border-glass-border transition-all">
+                        <Mail size={18} />
+                      </button>
+                    </motion.div>
+                  ))
+                )
+              ) : (
+                friendRequests.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-20 text-center">
+                    <div className="w-16 h-16 bg-background-tertiary rounded-2xl flex items-center justify-center mb-4 text-text-secondary">
+                      <UserCheck size={32} />
+                    </div>
+                    <p className="text-sm text-text-secondary italic">No pending requests at the moment.</p>
+                  </div>
+                ) : (
+                  friendRequests.map((req) => (
+                    <motion.div 
+                      key={req._id}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="flex items-center justify-between p-4 bg-background-tertiary/50 border-l-4 border-accent rounded-2xl shadow-xl"
+                    >
+                      <div className="flex items-center gap-4">
+                        <img src={req.avatar || `https://ui-avatars.com/api/?name=${req.username}`} className="w-11 h-11 rounded-xl object-cover shadow-md" alt="" />
+                        <h4 className="text-sm font-bold text-text-primary">{req.username}</h4>
+                      </div>
+                      <button 
+                        onClick={() => handleAcceptRequest(req._id)}
+                        className="px-5 py-2 bg-accent hover:bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-accent/20 transition-all active:scale-95"
+                      >
+                        Accept
+                      </button>
+                    </motion.div>
+                  ))
+                )
+              )}
             </div>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 };
 
-export default Profile;
+export default Profile;

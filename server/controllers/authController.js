@@ -5,12 +5,13 @@ import jwt from "jsonwebtoken"
 export async function register(req,res){
 
 try{
-
+console.log("Registration attempt:", req.body);
 const {username,email,password} = req.body
 
 const userExists = await User.findOne({email})
 
 if(userExists){
+console.log("User already exists:", email);
 return res.status(400).json({msg:"User already exists"})
 }
 
@@ -21,6 +22,7 @@ email,
 password
 })
 
+console.log("User created successfully:", user._id);
 const token = jwt.sign(
 {id:user._id},
 process.env.JWT_SECRET,
@@ -30,7 +32,7 @@ process.env.JWT_SECRET,
 res.json({token,user})
 
 }catch(err){
-
+console.error("Registration error:", err);
 res.status(500).json(err)
 
 }

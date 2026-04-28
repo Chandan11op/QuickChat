@@ -8,17 +8,22 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: "#2563EB", // Bright blue
-        primaryHover: "#1D4ED8",
-        dark: {
-          900: "#0B1120", // Deepest background
-          800: "#0F172A", // Main background
-          700: "#1E293B", // Card/Sidebar background
-          600: "#334155", // Border/Hover
-        }
+        background: {
+          primary: "var(--bg-primary)",
+          secondary: "var(--bg-secondary)",
+          tertiary: "var(--bg-tertiary)",
+        },
+        text: {
+          primary: "var(--text-primary)",
+          secondary: "var(--text-secondary)",
+        },
+        accent: "var(--accent)",
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ["Inter", "sans-serif"],
+      },
+      backgroundImage: {
+        'glass-gradient': 'linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
       }
     }
   },
