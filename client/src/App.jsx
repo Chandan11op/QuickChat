@@ -4,6 +4,7 @@ import { useAuthStore } from "./store/useAuthStore";
 import { useSocketStore } from "./store/useSocketStore";
 import { useChatStore } from "./store/useChatStore";
 import { Toaster } from "react-hot-toast";
+import { useUIStore } from "./store/useUIStore";
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -16,6 +17,27 @@ function App() {
   const user = useAuthStore((state) => state.user);
   const { connect, disconnect, socket } = useSocketStore();
   const { addMessage, updateOnlineUsers, setTyping, updateConversationLastMessage } = useChatStore();
+  const { theme, accentColor } = useUIStore();
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === "light") {
+      root.classList.add("light");
+      root.classList.remove("dark");
+    } else {
+      root.classList.add("dark");
+      root.classList.remove("light");
+    }
+
+    root.style.setProperty("--accent", accentColor);
+
+    if (accentColor.startsWith("#")) {
+      const r = parseInt(accentColor.slice(1, 3), 16);
+      const g = parseInt(accentColor.slice(3, 5), 16);
+      const b = parseInt(accentColor.slice(5, 7), 16);
+      root.style.setProperty("--accent-glow", `rgba(${r}, ${g}, ${b}, 0.4)`);
+    }
+  }, [theme, accentColor]);
   
   useEffect(() => {
     if (user?._id) {

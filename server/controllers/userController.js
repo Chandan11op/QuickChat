@@ -49,32 +49,48 @@ export const getFriendRequests = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
     try {
-        const { username, bio } = req.body;
-        const user = await User.findByIdAndUpdate(
-            req.user,
-            { username, bio },
-            { new: true }
-        );
+        const { username, bio, fullName, contactNumber, dob } = req.body;
+        
+        const user = await User.findById(req.user);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        if (username !== undefined) user.username = username;
+        if (bio !== undefined) user.bio = bio;
+        if (fullName !== undefined) user.fullName = fullName;
+        if (contactNumber !== undefined) user.contactNumber = contactNumber;
+        if (dob !== undefined) user.dob = dob;
+
+        await user.save();
         res.json(user);
     } catch (err) {
+        console.error("Update profile error:", err);
         res.status(500).json(err);
     }
 };
 
-export const searchUsers = async(req, res) => {
+export const searchUsers = async (req, res) => {
     try {
-        const keyword = req.query.search
-            ? {
-                $or: [
-                    { username: { $regex: req.query.search, $options: "i" } },
-                    { email: { $regex: req.query.search, $options: "i" } },
-                ],
-            }
-            : {};
+        const searchVal = req.query.search ? req.query.search.trim().toLowerCase() : "";
         
-        // Find users matching search but not the logged-in user
-        const users = await User.find(keyword).find({ _id: { $ne: req.user } });
-        res.json(users);
+        // Fetch all users except the current user
+        const allUsers = await User.find({ _id: { $ne: req.user } });
+        
+        // Filter in memory since fields are encrypted in the database
+        const filteredUsers = allUsers.filter(user => {
+            if (!searchVal) return true;
+            const username = (user.username || "").toLowerCase();
+            const email = (user.email || "").toLowerCase();
+            const fullName = (user.fullName || "").toLowerCase();
+            const contactNumber = (user.contactNumber || "").toLowerCase();
+            return username.includes(searchVal) || 
+                   email.includes(searchVal) || 
+                   fullName.includes(searchVal) || 
+                   contactNumber.includes(searchVal);
+        });
+
+        res.json(filteredUsers);
     } catch (err) {
         res.status(500).json(err);
     }

@@ -150,6 +150,12 @@ const Profile = () => {
                       <Calendar size={16} className="text-accent" />
                       Joined {new Date(user?.createdAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
                     </span>
+                    {user?.dob && (
+                      <span className="flex items-center gap-1.5 text-sm font-medium">
+                        <Calendar size={16} className="text-accent" strokeWidth={2.5} />
+                        Born {new Date(user?.dob).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <button 

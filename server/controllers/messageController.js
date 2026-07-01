@@ -51,9 +51,9 @@ export const sendMessage = async (req, res) => {
         const newMessage = new Message({
             senderId,
             conversationId: activeConversationId,
-            text,
+            content: text,
             fileUrl,
-            fileType: fileType || (req.file ? "image" : (fileUrl ? "file" : "text"))
+            type: fileType || (req.file ? "image" : (fileUrl ? "file" : "text"))
         });
 
         await newMessage.save();
@@ -123,5 +123,42 @@ export const clearChat = async (req, res) => {
         res.json({ message: "Chat cleared" });
     } catch (err) {
         res.status(500).json(err);
+    }
+};
+
+export const createGroup = async (req, res) => {
+    try {
+        const { groupName, participants } = req.body;
+        const senderId = req.user;
+        
+        if (!groupName || !participants || !participants.length) {
+            return res.status(400).json({ error: "Group name and participants are required" });
+        }
+        
+        const allParticipants = [...new Set([...participants, senderId.toString()])];
+        
+        const newConversation = new Conversation({
+            isGroup: true,
+            groupName,
+            participants: allParticipants,
+            groupAdmin: [senderId]
+        });
+        
+        await newConversation.save();
+        
+        const newMessage = new Message({
+            senderId,
+            conversationId: newConversation._id,
+            content: `Group "${groupName}" created.`,
+            type: "text"
+        });
+        await newMessage.save();
+        
+        newConversation.lastMessage = newMessage._id;
+        await newConversation.save();
+        
+        res.status(201).json(newConversation);
+    } catch (error) {
+        res.status(500).json({ error: "Internal server error" });
     }
 };

@@ -14,6 +14,24 @@ export const useChatStore = create((set, get) => ({
     messages: [...state.messages, message] 
   })),
   setOnlineUsers: (users) => set({ onlineUsers: users }),
+  updateOnlineUsers: (users) => set({ onlineUsers: users }),
+  
+  updateConversationLastMessage: (conversationId, message) => set((state) => {
+    const updatedConversations = state.conversations.map(conv => {
+      if (conv._id === conversationId) {
+        return { 
+          ...conv, 
+          lastMessage: { ...conv.lastMessage, text: message.content || message.text }, // Map content/text correctly
+          updatedAt: message.createdAt 
+        };
+      }
+      return conv;
+    });
+    // Sort conversations by most recently updated
+    return {
+      conversations: updatedConversations.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+    };
+  }),
   
   setTyping: (conversationId, userId, isTyping) => set((state) => {
     const currentTyping = state.typingUsers[conversationId] || [];

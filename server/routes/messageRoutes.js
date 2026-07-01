@@ -1,5 +1,5 @@
 import express from "express";
-import { sendMessage, getMessages, deleteMessage, clearChat, getConversations } from "../controllers/messageController.js";
+import { sendMessage, getMessages, deleteMessage, clearChat, getConversations, createGroup } from "../controllers/messageController.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 import multer from "multer";
 import path from "path";
@@ -20,7 +20,8 @@ const upload = multer({ storage });
 
 router.get("/conversations", authMiddleware, getConversations);
 router.get("/:id", authMiddleware, getMessages);
-router.post("/send/:id", authMiddleware, upload.single("file"), sendMessage);
+router.post("/send", authMiddleware, upload.single("file"), sendMessage);
+router.post("/create-group", authMiddleware, createGroup);
 router.delete("/delete/:id", authMiddleware, deleteMessage);
 router.delete("/clear/:id", authMiddleware, clearChat);
 

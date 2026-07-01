@@ -5,29 +5,46 @@
 @tailwind utilities;
 
 :root {
-  --bg-primary: #0a0a0c;
-  --bg-secondary: #16161a;
-  --bg-tertiary: #1f1f23;
-  --text-primary: #ffffff;
-  --text-secondary: #a1a1aa;
+  --bg-primary: #030014;
+  --bg-secondary: #050519;
+  --bg-tertiary: #0c0b24;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --accent: #6366f1;
+  --accent-glow: rgba(99, 102, 241, 0.4);
+  --glass-bg: rgba(5, 5, 25, 0.4);
+  --glass-border: rgba(255, 255, 255, 0.08);
+}
+
+:root.light {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f1f5f9;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
   --accent: #3b82f6;
-  --glass-bg: rgba(22, 22, 26, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.1);
+  --accent-glow: rgba(59, 130, 246, 0.4);
+  --glass-bg: rgba(255, 255, 255, 0.4);
+  --glass-border: rgba(0, 0, 0, 0.08);
 }
 
 @layer base {
   body {
-    @apply bg-[var(--bg-primary)] text-[var(--text-primary)] antialiased font-['Inter'];
+    @apply bg-background-primary text-text-primary antialiased font-['Inter'] flex flex-col min-h-screen overflow-x-hidden m-0 p-0;
   }
 }
 
 @layer components {
   .glass-card {
-    @apply bg-[var(--glass-bg)] backdrop-blur-xl border border-[var(--glass-border)] rounded-2xl;
+    @apply bg-[var(--glass-bg)] backdrop-blur-2xl border border-[var(--glass-border)] rounded-2xl shadow-xl;
+  }
+  
+  .glass-card-premium {
+    @apply bg-gradient-to-br from-white/[0.05] to-transparent backdrop-blur-3xl border border-white/[0.08] shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] rounded-3xl overflow-hidden relative;
   }
 
   .neon-glow {
-    box-shadow: 0 0 15px -3px var(--accent);
+    box-shadow: 0 0 30px -5px var(--accent-glow);
   }
 
   .scrollbar-hide::-webkit-scrollbar {
@@ -43,7 +60,7 @@
   }
   
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-zinc-800 rounded-full hover:bg-zinc-700 transition-colors;
+    @apply bg-white/10 rounded-full hover:bg-white/20 transition-colors;
   }
 }
 
@@ -55,12 +72,6 @@
 
 .animate-slide-in {
   animation: slideIn 0.3s ease-out forwards;
-}
-
-@layer base {
-  body {
-    @apply bg-[#0F172A] text-gray-200 antialiased font-sans flex flex-col min-h-screen overflow-x-hidden m-0 p-0;
-  }
 }
 
 /* Custom scrollbar for webkit browsers */

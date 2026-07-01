@@ -1,16 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Phone, Video, Info, Send, Smile, Paperclip, MessageSquare } from 'lucide-react';
+import { Phone, Video, Info, Send, Smile, Paperclip, MessageSquare, ArrowLeft } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useChatStore } from '../../store/useChatStore';
 import { useSocketStore } from '../../store/useSocketStore';
 import MessageBubble from './MessageBubble';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
+import logo from '../../assets/logo.png';
 
 const ChatWindow = () => {
   const user = useAuthStore(state => state.user);
-  const { activeConversation, messages, setMessages, addMessage, onlineUsers, typingUsers } = useChatStore();
+  const { activeConversation, setActiveConversation, messages, setMessages, addMessage, onlineUsers, typingUsers } = useChatStore();
   const socket = useSocketStore(state => state.socket);
   const [messageInput, setMessageInput] = useState('');
   const scrollRef = useRef();
@@ -73,27 +74,40 @@ const ChatWindow = () => {
 
   if (!activeConversation) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-background-primary relative p-10 text-center">
+      <div className="hidden md:flex flex-1 flex-col items-center justify-center bg-background-primary relative p-10 text-center overflow-hidden">
         <motion.div 
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          className="w-24 h-24 bg-accent/10 rounded-full flex items-center justify-center mb-6"
+          animate={{ scale: [1, 1.1, 1], opacity: [0.1, 0.2, 0.1] }}
+          transition={{ duration: 8, repeat: Infinity }}
+          className="absolute w-[40rem] h-[40rem] bg-accent/20 rounded-full blur-[150px] pointer-events-none"
+        />
+        <motion.div 
+          initial={{ scale: 0, rotate: -180 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ type: 'spring', damping: 15 }}
+          className="w-24 h-24 bg-gradient-to-tr from-accent/20 to-purple-500/20 backdrop-blur-md rounded-3xl flex items-center justify-center mb-6 shadow-[0_0_40px_rgba(99,102,241,0.2)] border border-white/10 relative z-10 overflow-hidden"
         >
-          <MessageSquare className="text-accent w-10 h-10" />
+          <img src={logo} alt="QuickChat Logo" className="w-16 h-16 object-contain" />
         </motion.div>
-        <h3 className="text-2xl font-bold text-text-primary">QuickChat Web</h3>
-        <p className="text-text-secondary mt-2 max-w-xs">
-          Send and receive messages without keeping your phone online.
+        <h3 className="text-3xl font-bold text-white relative z-10">QuickChat Web</h3>
+        <p className="text-text-secondary mt-3 max-w-sm relative z-10">
+          Select a conversation or start a new one. Send and receive messages in real-time.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-background-primary relative">
+    <div className="flex-1 flex flex-col h-full bg-background-primary relative w-full">
       {/* Header */}
-      <header className="h-16 border-b border-glass-border flex items-center justify-between px-6 bg-background-secondary/50 backdrop-blur-xl z-10">
+      <header className="h-16 border-b border-white/5 flex items-center justify-between px-6 bg-background-secondary/60 backdrop-blur-xl z-10 shadow-sm">
         <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setActiveConversation(null)}
+            className="p-2 -ml-2 text-text-secondary hover:text-accent transition-colors md:hidden"
+            aria-label="Back"
+          >
+            <ArrowLeft size={20} />
+          </button>
           <div className="relative">
             <img 
               src={otherParticipant?.avatar || `https://ui-avatars.com/api/?name=${otherParticipant?.username}&background=random`} 
@@ -147,9 +161,9 @@ const ChatWindow = () => {
       </div>
 
       {/* Input Area */}
-      <div className="p-4 bg-background-secondary/30 backdrop-blur-xl border-t border-glass-border">
+      <div className="p-4 bg-background-secondary/40 backdrop-blur-2xl border-t border-white/5">
         <form onSubmit={handleSendMessage} className="max-w-5xl mx-auto flex items-center gap-3">
-          <div className="flex-1 bg-background-tertiary border border-glass-border rounded-2xl flex items-center px-4 py-1.5 focus-within:ring-2 focus-within:ring-accent/30 transition-all">
+          <div className="flex-1 bg-background-tertiary/80 border border-white/10 rounded-2xl flex items-center px-4 py-1.5 focus-within:ring-2 focus-within:ring-accent/50 focus-within:border-accent/50 transition-all shadow-inner">
             <button type="button" className="p-2 text-text-secondary hover:text-accent transition-colors">
               <Smile size={22} />
             </button>

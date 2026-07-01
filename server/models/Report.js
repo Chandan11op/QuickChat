@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { encrypt, decrypt } from "../utils/crypto.js";
 
 const reportSchema = new mongoose.Schema({
     reporterId: {
@@ -13,13 +14,19 @@ const reportSchema = new mongoose.Schema({
     },
     reason: {
         type: String,
-        required: true
+        required: true,
+        set: encrypt,
+        get: decrypt
     },
     status: {
         type: String,
         enum: ["pending", "reviewed", "resolved"],
         default: "pending"
     }
-}, { timestamps: true });
+}, { 
+    timestamps: true,
+    toJSON: { getters: true },
+    toObject: { getters: true }
+});
 
 export default mongoose.model("Report", reportSchema);

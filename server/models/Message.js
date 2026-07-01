@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { encrypt, decrypt } from "../utils/crypto.js";
 
 const messageSchema = new mongoose.Schema({
   senderId: {
@@ -15,7 +16,9 @@ const messageSchema = new mongoose.Schema({
   },
   content: {
     type: String,
-    required: true
+    required: true,
+    set: encrypt,
+    get: decrypt
   },
   type: {
     type: String,
@@ -24,7 +27,9 @@ const messageSchema = new mongoose.Schema({
   },
   fileUrl: {
     type: String,
-    default: ""
+    default: "",
+    set: encrypt,
+    get: decrypt
   },
   status: {
     type: String,
@@ -45,9 +50,13 @@ const messageSchema = new mongoose.Schema({
     type: Date,
     index: { expires: 0 } // TTL index: documents will be deleted when current date > expiresAt
   }
-}, { timestamps: true });
+}, { 
+  timestamps: true,
+  toJSON: { getters: true },
+  toObject: { getters: true }
+});
 
 // Index for pagination and sorting
 messageSchema.index({ conversationId: 1, createdAt: -1 });
 
-export default mongoose.model("Message",messageSchema);
+export default mongoose.model("Message", messageSchema);

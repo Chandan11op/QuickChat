@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { encrypt, decrypt } from "../utils/crypto.js";
 
 const notificationSchema = new mongoose.Schema({
   userId: {
@@ -14,7 +15,9 @@ const notificationSchema = new mongoose.Schema({
   },
   content: {
     type: String,
-    required: true
+    required: true,
+    set: encrypt,
+    get: decrypt
   },
   referenceId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -25,6 +28,10 @@ const notificationSchema = new mongoose.Schema({
     default: false,
     index: true
   }
-}, { timestamps: true });
+}, { 
+  timestamps: true,
+  toJSON: { getters: true },
+  toObject: { getters: true }
+});
 
 export default mongoose.model("Notification", notificationSchema);

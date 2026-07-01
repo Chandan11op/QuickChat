@@ -3,6 +3,7 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { Strategy as GitHubStrategy } from 'passport-github2';
 import User from '../models/User.js';
 import dotenv from 'dotenv';
+import { encrypt } from "../utils/crypto.js";
 
 dotenv.config();
 
@@ -19,7 +20,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
           let user = await User.findOne({ 
             $or: [
               { googleId: profile.id },
-              { email: profile.emails[0].value }
+              { email: encrypt(profile.emails[0].value) }
             ]
           });
 
@@ -64,7 +65,7 @@ if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
           let user = await User.findOne({ 
             $or: [
               { githubId: profile.id },
-              { email: email }
+              { email: encrypt(email) }
             ]
           });
 

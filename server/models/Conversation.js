@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { encrypt, decrypt } from "../utils/crypto.js";
 
 const conversationSchema = new mongoose.Schema({
   participants: [
@@ -14,10 +15,14 @@ const conversationSchema = new mongoose.Schema({
   groupName: {
     type: String,
     trim: true,
+    set: encrypt,
+    get: decrypt
   },
   groupAvatar: {
     type: String,
-    default: ""
+    default: "",
+    set: encrypt,
+    get: decrypt
   },
   groupAdmin: [
     {
@@ -34,7 +39,11 @@ const conversationSchema = new mongoose.Schema({
     of: Number,
     default: {}
   }
-}, { timestamps: true });
+}, { 
+  timestamps: true,
+  toJSON: { getters: true },
+  toObject: { getters: true }
+});
 
 // Index for faster lookups by participant
 conversationSchema.index({ participants: 1 });
